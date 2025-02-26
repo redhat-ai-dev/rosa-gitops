@@ -60,3 +60,7 @@ data:
     g, user:default/erwangranger, role:default/rhdhpai-users
     g, user:default/catherineweeks, role:default/rhdhpai-users
     g, user:default/beaumorley, role:default/rhdhpai-users
+
+    p, role:default/template-executers, scaffolder.action.execute, use, allow
+    g, user:default/mfaisal, role:default/template-executers
+    g, user:default/jcollier, role:default/template-executers
