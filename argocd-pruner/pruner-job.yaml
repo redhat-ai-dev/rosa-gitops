@@ -25,6 +25,16 @@ spec:
                     secretKeyRef:
                       name: pruner-secrets
                       key: GITOPS_GIT_ORG
+                - name: RHDH_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: pruner-secrets
+                      key: RHDH_URL
+                - name: RHDH_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: pruner-secrets
+                      key: RHDH_TOKEN
               command:
                 - /bin/bash
                 - -c
@@ -35,15 +45,46 @@ spec:
                   LABEL_SELECTOR="backstage-name=rolling-demo"
                   NOW=$(date +%s)
 
+                  backstageRequest() {
+                    uri=$1
+                    method=$2
+                    backstage_response=$(curl -s --insecure -X $method \
+                        -H "Authorization: Bearer $RHDH_TOKEN" \
+                        "$RHDH_URL/$uri")
+                    echo $backstage_response
+                  }
+
+                  backstageRequestStatus() {
+                    uri=$1
+                    method=$2
+                    backstage_response=$(curl -s --insecure -o /dev/null -w "%{http_code}" -X $method \
+                        -H "Authorization: Bearer $RHDH_TOKEN" \
+                        "$RHDH_URL/$uri")
+                    echo $backstage_response
+                  }
+
+                  githubRequest() {
+                    repo=$1
+                    method=$2
+                    github_response=$(curl -s -o /dev/null -w "%{http_code}" -X $method \
+                      -H "Authorization: token $GH_TOKEN" \
+                      -H "Accept: application/vnd.github+json" \
+                      "https://api.github.com/repos/$repo")
+                    echo $github_response
+                  }
+
+                  # Get applications with the matching label
                   kubectl get applications.argoproj.io -n "$NAMESPACE" -l "$LABEL_SELECTOR" -o json | jq -c '.items[]' | while read -r app; do
                     name=$(echo "$app" | jq -r '.metadata.name')
                     creation_ts=$(echo "$app" | jq -r '.metadata.creationTimestamp')
                     creation_sec=$(date -u -d "${creation_ts}" +"%s" 2>/dev/null || echo 0)
 
+                    echo "Processing application: $name"
+
                     age=$(( (NOW - creation_sec) / 60 ))
                     if [ "$age" -gt 1440 ]; then
                       echo "Deleting Application: $name (age: ${age}m)"
-                      kubectl patch app $name  -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge -n $NAMESPACE
+                      kubectl patch app $name -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge -n $NAMESPACE
                       kubectl delete app $name -n $NAMESPACE
 
                       app_repo_name="${name%-app-of-apps}"
@@ -52,23 +93,83 @@ spec:
                       gitops_repo_name="${name%-app-of-apps}-gitops"
                       full_gitops_repo="$GH_ORG/$gitops_repo_name"
 
-                      echo "Deleting GitHub repo: $full_app_repo"
-                      curl -s -o /dev/null -w "%{http_code}" -X DELETE \
-                      -H "Authorization: token $GH_TOKEN" \
-                      -H "Accept: application/vnd.github+json" \
-                      "https://api.github.com/repos/$full_app_repo" | grep -q "204" \
-                      && echo "Deleted $full_app_repo" \
-                      || echo "Failed to delete $full_app_repo"
+                      for repo in "$full_app_repo" "$full_gitops_repo"; do
+                        echo "Deleting GitHub repo: $repo"
+                        github_response=$(githubRequest "$repo" "DELETE")
 
-                      echo "Deleting GitHub repo: $full_gitops_repo"
-                      curl -s -o /dev/null -w "%{http_code}" -X DELETE \
-                      -H "Authorization: token $GH_TOKEN" \
-                      -H "Accept: application/vnd.github+json" \
-                      "https://api.github.com/repos/$full_gitops_repo" | grep -q "204" \
-                      && echo "Deleted $full_gitops_repo" \
-                      || echo "Failed to delete $full_gitops_repo"
+                        if [ "$github_response" = "204" ]; then
+                          echo "Successfully deleted GitHub repo: $repo"
+                        else
+                          echo "Failed to delete GitHub repo: $repo - HTTP status: $github_response"
+                          error_details=$(githubRequest "$repo" "GET")
+                          echo "Error details for $repo: $error_details"
+                        fi
+                      done
+
+                      echo "Cleaning Backstage Components for $app_repo_name using URL: $RHDH_URL"
+                      component_response=$(backstageRequest "api/catalog/entities?filter=kind=component,metadata.name=$app_repo_name" "GET")
+                      component_uid=$(echo "$component_response" | jq -r '.[0].metadata.uid // empty')
+
+                      if [ -n "$component_uid" ]; then
+                        echo "Deleting Backstage Component: $app_repo_name (UID: $component_uid)"
+                        delete_component_response=$(backstageRequestStatus "api/catalog/entities/by-uid/$component_uid" "DELETE")
+
+                        if [ "$delete_component_response" = "204" ]; then
+                          echo "Successfully deleted Backstage Component: $app_repo_name"
+                        else
+                          echo "Failed to delete Backstage Component: $app_repo_name - HTTP status: $delete_component_response"
+                          echo "Component response details: $(backstageRequest "api/catalog/entities/by-uid/$component_uid" "GET")"
+                        fi
+                      else
+                        echo "No Backstage Component found with name: $app_repo_name"
+                        echo "Search response: $component_response"
+                      fi
+
+                      echo "Cleaning Backstage Resources for $app_repo_name using URL: $RHDH_URL"
+                      resource_response=$(backstageRequest "api/catalog/entities?filter=kind=resource,metadata.name=$app_repo_name-gitops" "GET")
+                      resource_uid=$(echo "$resource_response" | jq -r '.[0].metadata.uid // empty')
+
+                      if [ -n "$resource_uid" ]; then
+                        echo "Deleting Backstage Resource: $app_repo_name (UID: $resource_uid)"
+                        delete_resource_response=$(backstageRequestStatus "api/catalog/entities/by-uid/$resource_uid" "DELETE")
+                        
+                        if [ "$delete_resource_response" = "204" ]; then
+                          echo "Successfully deleted Backstage Resource: $app_repo_name"
+                        else
+                          echo "Failed to delete Backstage Resource: $app_repo_name - HTTP status: $delete_resource_response"
+                          echo "Resource response details: $(backstageRequest "api/catalog/entities/by-uid/$resource_uid" "GET")"
+                        fi
+                      else
+                        echo "No Backstage Resource found with name: $app_repo_name"
+                        echo "Search response: $resource_response"
+                      fi
+
+                      # Find github repos locations that has the target the gh repos in its target fields
+                      location_app_target="https://github.com/${full_app_repo}/tree/main/catalog-info.yaml"
+                      location_gitops_target="https://github.com/${full_app_repo}-gitops/tree/main/catalog-info.yaml"
+
+                      echo "Cleaning Backstage Github Repos locations for $app_repo_name using URL: $RHDH_URL"
+                      for location_target in "$location_app_target" "$location_gitops_target"; do
+                        location_response=$(backstageRequest "api/catalog/locations" "GET")
+                        location_uid=$(echo "$location_response" | jq -r --arg target "$location_target" \
+                          '.[] | select(.data.target | contains($target)) | .data.id // empty')
+
+                        if [ -n "$location_uid" ]; then
+                          echo "Deleting Backstage Location with target: $location_target (UID: $location_uid)"
+                          delete_location_response=$(backstageRequestStatus "api/catalog/locations/$location_uid" "DELETE")
+                          if [ "$delete_location_response" = "204" ]; then
+                            echo "Successfully deleted Backstage Location for: $location_target"
+                          else
+                            echo "Failed to delete Backstage Location: $location_target - HTTP status: $delete_location_response"
+                          fi
+                        else
+                          echo "No Backstage Location found with target: $location_target"
+                        fi
+                      done
+
                     else
-                      echo "found application $name. Age: $age m - skipping"
+                      echo "Application $name found. Skipping:: Reason - Age: $age m"
                     fi
+
                     sleep 2
                   done
