@@ -1,0 +1,21 @@
+# This group provides cluster-wide edit access on the redhat-ai-dev team OpenShift cluster.
+# Your user *must* already exist on the cluster before adding it to this list
+kind: Group
+apiVersion: user.openshift.io/v1
+metadata:
+  name: redhat-ai-dev-users
+users:
+  - yangcao77
+  - michael-valdron
+  - maysunfaisal
+  - elsony
+  - thepetk
+  - benwilcock
+  - jdubrick
+  - mfaisal
+  - yangcao
+  - mvaldron
+  - tpetkos
+  - gmontero
+  - jrichter
+  - karthik
