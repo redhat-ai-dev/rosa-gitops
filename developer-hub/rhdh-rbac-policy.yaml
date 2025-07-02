@@ -8,10 +8,10 @@ metadata:
     rhdh.redhat.com/backstage-name: developer-hub
 data:
   rbac-policy.csv: |
-    p, role:default/rhdhpai-users, lightspeed.conversations.read, read, allow
-    p, role:default/rhdhpai-users, lightspeed.conversations.create, create, allow
-    p, role:default/rhdhpai-users, lightspeed.conversations.delete, delete, allow
-
+    p, role:default/rhdhpai-users, lightspeed.chat.read, read, allow
+    p, role:default/rhdhpai-users, lightspeed.chat.create, create, allow
+    p, role:default/rhdhpai-users, lightspeed.chat.delete, delete, allow
+    
     p, role:default/rhdhpai-users, catalog-entity, read, allow
     p, role:default/rhdhpai-users, catalog-entity, update, allow
     p, role:default/rhdhpai-users, catalog-entity, delete, allow
