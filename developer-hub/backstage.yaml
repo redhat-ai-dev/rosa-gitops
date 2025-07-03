@@ -50,7 +50,40 @@ spec:
                   - mountPath: /app-root/config/app-config-rhdh.yaml
                     name: app-config-rhdh
                     subPath: app-config-rhdh.yaml
+                  - mountPath: /app-root/tmp/data/feedback
+                    name: shared-data
+              - env:
+                  - name: PGUSER
+                    valueFrom:
+                      secretKeyRef:
+                        name: feedback-postgres-info
+                        key: user
+                  - name: PGPASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: feedback-postgres-info
+                        key: password
+                  - name: PGDATABASE
+                    valueFrom:
+                      secretKeyRef:
+                        name: feedback-postgres-info
+                        key: db-name
+                  - name: PGHOST
+                    value: feedback-postgres-svc.feedback-postgres.svc.cluster.local
+                  - name: PGPORT
+                    value: 5432
+                  - name: FEEDBACK_DIRECTORY
+                    value: /app-root/tmp/data/feedback
+                  - name: FETCH_FREQUENCY
+                    value: 60
+                image: 'quay.io/redhat-ai-dev/feedback-harvester:v0.1.0'
+                name: feedback-harvester
+                volumeMounts:
+                  - mountPath: /app-root/tmp/data/feedback
+                    name: shared-data
             volumes:
               - configMap:
                   name: rcsconfig
                 name: rcsconfig
+              - name: shared-data
+                emptyDir: {}
