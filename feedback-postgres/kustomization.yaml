@@ -1,0 +1,7 @@
+resources:
+  - base/deployment.yaml
+  - base/pvc.yaml
+  - base/service.yaml
+  - post-deploy-config/job.yaml
+
+namespace: feedback-postgres
