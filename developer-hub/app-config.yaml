@@ -49,6 +49,9 @@ data:
           - "data:"
           - https://img.freepik.com
           - https://cdn.dribbble.com
+        script-src:
+          - "'self'"
+          - https://cdn.jsdelivr.net
     signInPage: oidc
     catalog:
       providers:
