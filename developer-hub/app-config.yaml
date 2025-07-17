@@ -11,6 +11,9 @@ data:
     app:
       title: AI Dev Developer Hub
       baseUrl: "${RHDH_BASE_URL}"
+      analytics:
+        adoptionInsights:
+          licensedUsers: 50
     auth:
       environment: production
       session:
