@@ -36,7 +36,7 @@ spec:
           name: container
           env:
             - name: OLLAMA_KEEP_ALIVE
-              value: 12h
+              value: '-1m'
             - name: OLLAMA_ORIGINS
               value: '*'
           ports:
