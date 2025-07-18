@@ -17,6 +17,9 @@ spec:
         - name: ollama-storage
           persistentVolumeClaim:
             claimName: ollama-storage
+        - name: model-config
+          configMap:
+            name: ollama-models-config
       containers:
         - resources:
             limits:
@@ -31,8 +34,12 @@ spec:
               exec:
                 command:
                   - /bin/sh
-                  - '-c'
-                  - 'ollama pull granite3-dense:8b; ollama list'
+                  - -c
+                  - |
+                    while read model; do
+                      echo "Pulling model: $model"
+                      ollama pull $model
+                    done < /app/models/models.txt && ollama list
           name: container
           env:
             - name: OLLAMA_KEEP_ALIVE
@@ -46,6 +53,8 @@ spec:
           volumeMounts:
             - name: ollama-storage
               mountPath: /.ollama
+            - name: model-config
+              mountPath: /app/models
           terminationMessagePolicy: File
           image: 'quay.io/redhat-ai-dev/ollama-ubi:v0.9.1'
       restartPolicy: Always
