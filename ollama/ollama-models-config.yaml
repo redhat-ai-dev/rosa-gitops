@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ollama-models-config
+data:
+  models.txt: |
+    llama3.1:8b
+    granite3.3:8b
