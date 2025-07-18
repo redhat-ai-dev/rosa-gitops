@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://github.com/redhat-ai-dev/rosa-namespace-provisioner/blob/main/deploy/kustomization.yaml
+
+patchesStrategicMerge:
+  - deployment-patch.yaml 

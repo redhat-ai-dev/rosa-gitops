@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rosa-namespace-provisioner
+spec:
+  template:
+    spec:
+      containers:
+      - name: controller
+        env:
+        - name: TARGET_GROUP_NAME
+          value: "redhat-ai-dev-edit-users" 
