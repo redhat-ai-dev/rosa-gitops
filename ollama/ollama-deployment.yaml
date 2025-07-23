@@ -39,7 +39,7 @@ spec:
                     while read model; do
                       echo "Pulling model: $model"
                       ollama pull $model
-                    done < /app/models/models.txt && ollama list
+                    done < /app/models/models.txt; ollama list
           name: container
           env:
             - name: OLLAMA_KEEP_ALIVE
