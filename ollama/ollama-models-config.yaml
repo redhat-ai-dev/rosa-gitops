@@ -6,4 +6,3 @@ data:
   models.txt: |
     llama3.1:8b
     granite3.3:8b
-    deepseek-coder:6.7b
