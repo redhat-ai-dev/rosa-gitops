@@ -5,5 +5,6 @@ resources:
   - ollama-deployment.yaml
   - ollama-service.yaml
   - ollama-pvc.yaml
+  - https://github.com/redhat-ai-dev/ollama-model-viewer/deploy?ref=main
 
 namespace: ollama
