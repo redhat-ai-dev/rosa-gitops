@@ -5,4 +5,4 @@ metadata:
 data:
   models.txt: |
     gemma3:27b
-    llama3.2:3b
+    llama3.2:1b
