@@ -4,5 +4,5 @@ metadata:
   name: ollama-models-config
 data:
   models.txt: |
-    llama3.1:8b
-    granite3.3:8b
+    gemma3:27b
+    llama3.2:3b
