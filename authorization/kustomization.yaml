@@ -5,3 +5,5 @@ resources:
   - redhat-ai-dev-edit-users.yaml
   - redhat-ai-dev-view.yaml
   - redhat-ai-dev-view-users.yaml
+  - rhoai-workspace-edit.yaml
+  - rhoai-workspace-edit-users.yaml

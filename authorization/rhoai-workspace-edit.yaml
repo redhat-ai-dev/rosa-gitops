@@ -1,0 +1,13 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rhoai-workspace-edit
+  namespace: rhoai-workspace
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: rhoai-workspace-edit-users
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
