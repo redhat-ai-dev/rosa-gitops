@@ -6,7 +6,7 @@ metadata:
 subjects:
   - kind: Group
     apiGroup: rbac.authorization.k8s.io
-    name: rhoai-workspace-edit-users
+    name: redhat-ai-dev-users
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

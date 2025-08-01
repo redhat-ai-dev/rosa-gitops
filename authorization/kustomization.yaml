@@ -4,4 +4,3 @@ resources:
   - redhat-ai-dev-users.yaml
   - redhat-ai-dev-view.yaml
   - rhoai-workspace-edit.yaml
-  - rhoai-workspace-edit-users.yaml
