@@ -5,7 +5,7 @@ metadata:
 subjects:
   - kind: Group
     apiGroup: rbac.authorization.k8s.io
-    name: redhat-ai-dev-users
+    name: redhat-ai-dev-view-users
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
