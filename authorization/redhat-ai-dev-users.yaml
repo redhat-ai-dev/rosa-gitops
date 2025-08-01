@@ -3,7 +3,7 @@
 kind: Group
 apiVersion: user.openshift.io/v1
 metadata:
-  name: redhat-ai-dev-edit-users
+  name: redhat-ai-dev-users
 users:
   - bwilcock
   - jdubrick
