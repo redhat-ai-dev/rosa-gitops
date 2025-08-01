@@ -46,6 +46,8 @@ spec:
               value: '-1m'
             - name: OLLAMA_ORIGINS
               value: '*'
+            - name: OLLAMA_CONTEXT_LENGTH
+              value: '16384'
           ports:
             - containerPort: 11434
               protocol: TCP
