@@ -6,4 +6,4 @@
 > [!NOTE]  
 > Adding your username to one of the `Group`s managed by this ArgoCD application does **not** create your username or grant access to the cluster. You must already have an internal SSO login in order for these role bindings to take effect.
 
-Membership in the `redhat-ai-dev-users` `Group` on the cluster grants cluster-wide `edit` permissions. Additional permissions can be configured via additional `Group` and `RoleBinding` resources.
+Membership in the `redhat-ai-dev-users` `Group` on the cluster grants cluster-wide `view`, and `edit` permissions to the user's personal namespace and the `rhoai-workspace` namespace. Additional permissions can be configured via additional `Group` and `RoleBinding` resources.
