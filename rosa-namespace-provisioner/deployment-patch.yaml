@@ -9,4 +9,4 @@ spec:
       - name: controller
         env:
         - name: TARGET_GROUP_NAME
-          value: "redhat-ai-dev-edit-users" 
+          value: "redhat-ai-dev-users" 
