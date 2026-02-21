@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: slack-alert-config
+  namespace: vllm
+spec:
+  route:
+    groupBy:
+      - pod
+    matchers:
+      - name: alert_route
+        matchType: "="
+        value: slack
+    receiver: slack-receiver
+    repeatInterval: 4h
+  receivers:
+    - name: slack-receiver
+      webhookConfigs:
+        - url: http://slack-webhook-proxy.devcluster-monitoring.svc.cluster.local:8080/webhook
+          sendResolved: true

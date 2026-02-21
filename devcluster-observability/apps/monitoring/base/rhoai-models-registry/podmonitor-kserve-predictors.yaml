@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kserve-vllm-predictors
+  namespace: devcluster-monitoring
+  labels:
+    app: kserve-vllm-predictors
+spec:
+  namespaceSelector:
+    matchNames:
+      - vllm
+  selector:
+    matchLabels:
+      component: predictor
+  podMetricsEndpoints:
+    - targetPort: 8080
+      path: /metrics
+      interval: 30s
+      scheme: http

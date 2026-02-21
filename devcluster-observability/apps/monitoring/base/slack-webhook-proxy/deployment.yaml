@@ -1,0 +1,51 @@
+# TODO: This part should be removed completely
+# as it is just a temp workaround. Normally it
+# should be covered by a slack app and not by
+# a proxy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slack-webhook-proxy
+  namespace: devcluster-monitoring
+  labels:
+    app: slack-webhook-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slack-webhook-proxy
+  template:
+    metadata:
+      labels:
+        app: slack-webhook-proxy
+    spec:
+      containers:
+        - name: slack-webhook-proxy
+          image: quay.io/tpetkos/slack-webhook-proxy:v0.1.1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: webhook-secret
+                  key: webhook-url
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

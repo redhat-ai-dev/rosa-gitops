@@ -1,0 +1,19 @@
+# TODO: This part should be removed completely
+# as it is just a temp workaround. Normally it
+# should be covered by a slack app and not by
+# a proxy
+apiVersion: v1
+kind: Service
+metadata:
+  name: slack-webhook-proxy
+  namespace: devcluster-monitoring
+  labels:
+    app: slack-webhook-proxy
+spec:
+  type: ClusterIP
+  selector:
+    app: slack-webhook-proxy
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rolling-demo-monitoring
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/thepetk/model-observability-gitops.git
+    targetRevision: HEAD
+    path: devcluster-observability/apps/monitoring/base/rolling-demo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rolling-demo-ns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
