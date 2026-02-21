@@ -4,8 +4,9 @@ metadata:
   name: rolling-demo-health
   namespace: devcluster-monitoring
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "3"
 spec:
+  resyncPeriod: 5m
   instanceSelector:
     matchLabels:
       dashboards: "grafana"

@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/thepetk/model-observability-gitops.git
+    repoURL: https://github.com/redhat-ai-dev/rosa-gitops.git
     targetRevision: HEAD
     path: devcluster-observability/apps/monitoring/base/rolling-demo
   destination:

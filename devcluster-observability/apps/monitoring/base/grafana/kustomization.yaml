@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - grafana-rbac.yaml
   - grafana-prometheus-sa.yaml
+  - grafana-pvc.yaml
   - grafana.yaml
   - grafana-datasource.yaml
   - grafana-folder.yaml

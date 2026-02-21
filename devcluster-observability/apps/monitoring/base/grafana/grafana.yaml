@@ -6,7 +6,7 @@ metadata:
   labels:
     dashboards: "grafana"
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   config:
     log:
@@ -37,8 +37,15 @@ spec:
     spec:
       template:
         spec:
+          volumes:
+            - name: grafana-data
+              persistentVolumeClaim:
+                claimName: grafana-data
           containers:
             - name: grafana
+              volumeMounts:
+                - name: grafana-data
+                  mountPath: /var/lib/grafana
               env:
                 - name: GF_SECURITY_ADMIN_USER
                   valueFrom:
