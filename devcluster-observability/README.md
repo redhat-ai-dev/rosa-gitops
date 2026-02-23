@@ -23,7 +23,6 @@ Alerts are set via `PrometheusRule` and routed through `AlertmanagerConfig` to a
 
 Available alerts are:
 
-- **RHOAIModelsRegistryTargetsDown** (warning, `vllm` namespace) — fires when no predictor scrape targets are up for 1 hour.
 - **VllmPodNotReady** (critical, `vllm` namespace) — fires when any pod in the `vllm` namespace is stuck in Pending or Failed phase for more than 1 hour
 - **RollingDemoPodNotReady** (critical, `rolling-demo-ns` namespace) — fires when any pod in the `rolling-demo-ns` namespace is stuck in Pending or Failed phase for more than 10 minutes
 
