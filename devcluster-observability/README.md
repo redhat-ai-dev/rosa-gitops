@@ -12,19 +12,21 @@ This gitops project manages the observability for:
 - Dashboards are declared as `GrafanaDashboard` CRDs
 - Prometheus datasources are configured via `GrafanaDatasource` CRDs
 
-Available Dashobards are:
+Available Dashboards are:
 
 - RHOAI Models Registry (Observability on RHOAI deployed models for RHDH AI DevCluster)
 - RHDH AI Rolling Demo
 
 ## Alerts
 
-Alerts are set via `PrometheusRule` and routed through `AlertmanagerConfig` to a Slack Workflow webhook (temporarily have added a light proxy too).
+Alerts are set via `PrometheusRule` and routed through `AlertmanagerConfig` directly to a Slack App Incoming Webhook.
+
+Alert notifications include the alert title, summary, description, and severity. Resolved alerts are also sent.
 
 Available alerts are:
 
 - **VllmPodNotReady** (critical, `vllm` namespace) — fires when any pod in the `vllm` namespace is stuck in Pending or Failed phase for more than 1 hour
-- **RollingDemoPodNotReady** (critical, `rolling-demo-ns` namespace) — fires when any pod in the `rolling-demo-ns` namespace is stuck in Pending or Failed phase for more than 10 minutes
+- **RollingDemoPodNotReady** (critical, `rolling-demo-ns` namespace) — fires when any pod in the `rolling-demo-ns` namespace is stuck in Pending or Failed phase for more than 1 hour
 
 ## Required Pre-existing Secrets
 
@@ -56,20 +58,23 @@ Keys:
 - `token_url` — the Keycloak token endpoint (`https://<KEYCLOAK_HOST>/realms/<REALM>/protocol/openid-connect/token`)
 - `api_url` — the Keycloak userinfo endpoint (`https://<KEYCLOAK_HOST>/realms/<REALM>/protocol/openid-connect/userinfo`)
 
-### Slack Webhook Proxy
+### Slack App Webhook
+
+The Slack webhook secret must exist in every namespace that has an `AlertmanagerConfig`:
 
 ```
-devcluster-monitoring/webhook-secret
+vllm/webhook-secret
+rolling-demo-ns/webhook-secret
 ```
 
 Keys:
 
-- `webhook-url` — the Slack Workflow webhook URL
+- `webhook-url` — the Slack App Incoming Webhook URL (e.g. `https://hooks.slack.com/services/...`)
 
 ## Installation
 
 1. Ensure the **Grafana Operator** and **Prometheus Operator** are installed on the cluster.
-2. Ensure the `devcluster-monitoring` and `vllm` namespaces already exist in your cluster.
+2. Ensure the `devcluster-monitoring`, `vllm`, `rolling-demo-ns` namespaces already exist in your cluster.
 3. Enable **user-workload monitoring** on the cluster (required for ServiceMonitor scraping in user namespaces):
    ```bash
    oc apply -f - <<EOF
@@ -96,12 +101,16 @@ Keys:
        alertmanager:
          enabled: true
          enableAlertmanagerConfig: true
+       prometheus:
+         logLevel: debug
+         retention: 15d
    EOF
    ```
-5. Create the **webhook-secret** for the slack-webhook-proxy:
+5. Create the **webhook-secret** for Slack alerting in each alerting namespace:
    ```bash
-   WEBHOOK_URL='https://hooks.slack.com/triggers/YOUR/WORKFLOW/URL'
-   oc create secret generic webhook-secret -n devcluster-monitoring --from-literal=webhook-url="$WEBHOOK_URL"
+   WEBHOOK_URL='https://hooks.slack.com/services/YOUR/APP/WEBHOOK'
+   oc create secret generic webhook-secret -n vllm --from-literal=webhook-url="$WEBHOOK_URL"
+   oc create secret generic webhook-secret -n rolling-demo-ns --from-literal=webhook-url="$WEBHOOK_URL"
    ```
 6. Create the **grafana-admin** to store your admin's credentials:
    ```bash
@@ -125,6 +134,6 @@ Keys:
    > **Note:** Users are auto-provisioned as `Viewer` on their first Red Hat SSO login. Role promotion (Editor, Admin) must be done manually by a Grafana admin.
 8. Apply Argo CD Project + Application from `argocd/`
 
-## Contirbutions
+## Contributions
 
 Contributions are welcomed in the repo. Feel free to open a PR.
