@@ -17,5 +17,5 @@ spec:
             severity: critical
             alert_route: slack
           annotations:
-            summary: "Pod {{ $labels.pod }} stuck in {{ $labels.phase }} phase"
-            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in {{ $labels.phase }} phase for more than 1 hour."
+            summary: "Pod `{{ $labels.pod }}` stuck in `{{ $labels.phase }}` phase"
+            description: "Pod `{{ $labels.pod }}` in namespace `{{ $labels.namespace }}` has been in `{{ $labels.phase }}` phase for more than 1 hour."
