@@ -19,7 +19,7 @@ spec:
       disable_login_form: "false"
     auth.generic_oauth:
       enabled: "true"
-      name: RedHat SSO
+      name: Red Hat SSO
       # we allow sign up with viewer role.
       # however we will set manual dashboard rules
       # allowing access only to specific teams
