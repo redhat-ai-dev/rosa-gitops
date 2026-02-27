@@ -14,15 +14,10 @@ spec:
     server:
       root_url: "%(GF_SERVER_ROOT_URL)s"
     auth.basic:
-      # Temporary enabled as a workaround to allow login to Grafana until
-      # the SSO is working. Will be removed once the SSO admin team is set up.
-      disable_login_form: "false"
+      disable_login_form: "true"
     auth.generic_oauth:
       enabled: "true"
       name: Red Hat SSO
-      # we allow sign up with viewer role.
-      # however we will set manual dashboard rules
-      # allowing access only to specific teams
       allow_sign_up: "true"
       auto_login: "false"
       scopes: openid email profile offline_access roles
