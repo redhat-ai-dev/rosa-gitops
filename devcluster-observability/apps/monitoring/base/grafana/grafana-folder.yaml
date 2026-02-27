@@ -1,0 +1,13 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: rhdh-ai-observability
+  namespace: devcluster-monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  resyncPeriod: 5m
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  title: RHDH AI Observability

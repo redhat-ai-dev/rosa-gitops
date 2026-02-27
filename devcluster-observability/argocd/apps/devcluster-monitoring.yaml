@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devcluster-monitoring
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-ai-dev/rosa-gitops.git
+    targetRevision: HEAD
+    path: devcluster-observability/apps/monitoring/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: devcluster-monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

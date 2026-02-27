@@ -1,0 +1,67 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  # prometheus datasource will get metrics from
+  # the cluster namespaces like openshift-monitoring
+  name: prometheus
+  namespace: devcluster-monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  resyncPeriod: 5m
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasource:
+    uid: prometheus
+    name: Prometheus
+    type: prometheus
+    access: proxy
+    url: https://prometheus-k8s.openshift-monitoring.svc:9091
+    isDefault: true
+    editable: false
+    jsonData:
+      httpHeaderName1: Authorization
+      tlsSkipVerify: true
+    secureJsonData:
+      httpHeaderValue1: "Bearer ${token}"
+  valuesFrom:
+    - targetPath: "secureJsonData.httpHeaderValue1"
+      valueFrom:
+        secretKeyRef:
+          name: grafana-prometheus-sa-token
+          key: token
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  # prometheus-user-workload datasource is a bit
+  # different. Here we rely on thanos to get metrics
+  # from user owned namespaces like devcluster-monitoring
+  name: prometheus-user-workload
+  namespace: devcluster-monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  resyncPeriod: 5m
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasource:
+    uid: prometheus-user-workload
+    name: prometheus-user-workload
+    type: prometheus
+    access: proxy
+    url: https://thanos-querier.openshift-monitoring.svc:9091
+    isDefault: false
+    jsonData:
+      httpHeaderName1: Authorization
+      tlsSkipVerify: true
+    secureJsonData:
+      httpHeaderValue1: "Bearer ${token}"
+  valuesFrom:
+    - targetPath: "secureJsonData.httpHeaderValue1"
+      valueFrom:
+        secretKeyRef:
+          name: grafana-prometheus-sa-token
+          key: token

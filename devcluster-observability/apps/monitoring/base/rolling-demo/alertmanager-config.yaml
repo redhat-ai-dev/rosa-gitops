@@ -1,0 +1,30 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: slack-alert-config
+  namespace: rolling-demo-ns
+spec:
+  route:
+    groupBy:
+      - pod
+    matchers:
+      - name: alert_route
+        matchType: "="
+        value: slack
+    receiver: slack-receiver
+    repeatInterval: 4h
+  receivers:
+    - name: slack-receiver
+      slackConfigs:
+        - apiURL:
+            name: webhook-secret
+            key: webhook-url
+          sendResolved: true
+          title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+          text: |
+            {{ range .Alerts }}
+            *Summary:* {{ .Annotations.summary }}
+
+            *Description:* {{ .Annotations.description }}
+            *Severity:* {{ .Labels.severity }}
+            {{ end }}

@@ -1,0 +1,100 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  namespace: devcluster-monitoring
+  labels:
+    dashboards: "grafana"
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  config:
+    log:
+      mode: console
+    server:
+      root_url: "%(GF_SERVER_ROOT_URL)s"
+    auth.basic:
+      # Temporary enabled as a workaround to allow login to Grafana until
+      # the SSO is working. Will be removed once the SSO admin team is set up.
+      disable_login_form: "false"
+    auth.generic_oauth:
+      enabled: "true"
+      name: Red Hat SSO
+      # we allow sign up with viewer role.
+      # however we will set manual dashboard rules
+      # allowing access only to specific teams
+      allow_sign_up: "true"
+      auto_login: "false"
+      scopes: openid email profile offline_access roles
+      email_attribute_path: email
+      login_attribute_path: username
+      name_attribute_path: full_name
+      skip_org_role_sync: "true"
+      use_refresh_token: "true"
+    users:
+      auto_assign_org_role: Viewer
+  deployment:
+    spec:
+      template:
+        spec:
+          volumes:
+            - name: grafana-data
+              persistentVolumeClaim:
+                claimName: grafana-data
+          containers:
+            - name: grafana
+              volumeMounts:
+                - name: grafana-data
+                  mountPath: /var/lib/grafana
+              env:
+                - name: GF_SECURITY_ADMIN_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-admin
+                      key: username
+                - name: GF_SECURITY_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-admin
+                      key: password
+                - name: GF_SERVER_ROOT_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-secrets
+                      key: grafana_url
+                - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-secrets
+                      key: client_id
+                - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-secrets
+                      key: client_secret
+                - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-secrets
+                      key: auth_url
+                - name: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-secrets
+                      key: token_url
+                - name: GF_AUTH_GENERIC_OAUTH_API_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-secrets
+                      key: api_url
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 1Gi
+  route:
+    spec:
+      tls:
+        termination: edge

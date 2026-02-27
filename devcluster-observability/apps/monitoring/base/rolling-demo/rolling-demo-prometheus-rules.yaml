@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rolling-demo-rules
+  namespace: rolling-demo-ns
+spec:
+  groups:
+    - name: rolling-demo.health
+      rules:
+        - alert: RollingDemoPodNotReady
+          expr: |
+            max by (pod, namespace, phase) (
+              kube_pod_status_phase{namespace="rolling-demo-ns", phase=~"Pending|Failed"} == 1
+            )
+          for: 10m
+          labels:
+            severity: critical
+            alert_route: slack
+          annotations:
+            summary: "Pod `{{ $labels.pod }}` stuck in `{{ $labels.phase }}` phase"
+            description: "Pod `{{ $labels.pod }}` in namespace `{{ $labels.namespace }}` has been in `{{ $labels.phase }}` phase for more than 1 hour."

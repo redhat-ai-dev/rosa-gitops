@@ -1,0 +1,251 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: rolling-demo-health
+  namespace: devcluster-monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  resyncPeriod: 5m
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: gitops
+  json: >
+    {
+      "uid": "rolling-demo-health",
+      "title": "RHDH Core Health",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "timezone": "browser",
+      "panels": [
+
+        {
+          "type": "row",
+          "title": "Pod Health (rolling-demo-ns)",
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+        },
+
+        {
+          "type": "stat",
+          "title": "Failed Pods",
+          "description": "Number of pods in Failed phase in rolling-demo-ns.",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 1, "w": 6, "h": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+            }
+          },
+          "targets": [
+            { "expr": "count(kube_pod_status_phase{namespace=\"rolling-demo-ns\", phase=\"Failed\"} == 1) or vector(0)", "instant": true }
+          ]
+        },
+
+        {
+          "type": "stat",
+          "title": "Pending Pods",
+          "description": "Number of pods in Pending phase in rolling-demo-ns.",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 6, "y": 1, "w": 6, "h": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 3 }] }
+            }
+          },
+          "targets": [
+            { "expr": "count(kube_pod_status_phase{namespace=\"rolling-demo-ns\", phase=\"Pending\"} == 1) or vector(0)", "instant": true }
+          ]
+        },
+
+        {
+          "type": "stat",
+          "title": "Running Pods",
+          "description": "Number of pods in Running phase in rolling-demo-ns.",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 1, "w": 6, "h": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+            }
+          },
+          "targets": [
+            { "expr": "count(kube_pod_status_phase{namespace=\"rolling-demo-ns\", phase=\"Running\"} == 1) or vector(0)", "instant": true }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Container Restarts",
+          "description": "Rate of container restarts in rolling-demo-ns.",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 18, "y": 1, "w": 6, "h": 5 },
+          "targets": [
+            { "expr": "sum by (pod) (rate(kube_pod_container_status_restarts_total{namespace=\"rolling-demo-ns\"}[5m]))", "legendFormat": "{{ pod }}" }
+          ]
+        },
+
+        {
+          "type": "row",
+          "title": "Service Availability & Latency",
+          "gridPos": { "x": 0, "y": 6, "w": 24, "h": 1 }
+        },
+
+        {
+          "type": "stat",
+          "title": "Scrape Target Up",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 0, "y": 7, "w": 6, "h": 6 },
+          "targets": [
+            {
+              "expr": "max(up)",
+              "instant": true
+            }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Inbound HTTP p95",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 6, "y": 7, "w": 18, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_duration_bucket[10m])))"
+            }
+          ]
+        },
+
+        {
+          "type": "row",
+          "title": "Catalog Health",
+          "gridPos": { "x": 0, "y": 13, "w": 24, "h": 1 }
+        },
+
+        {
+          "type": "stat",
+          "title": "Catalog Entities",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 0, "y": 14, "w": 6, "h": 6 },
+          "targets": [
+            { "expr": "max(catalog_entities_count)", "instant": true }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Catalog Processing Rate",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 6, "y": 14, "w": 12, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "rate(catalog_processed_entities_count_total[5m])" }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Processing Duration p95",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 18, "y": 14, "w": 6, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_processing_duration_bucket[10m])))"
+            }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Catalog Queue Length",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 0, "y": 20, "w": 12, "h": 6 },
+          "targets": [
+            { "expr": "catalog_stitching_queue_length" }
+          ]
+        },
+
+        {
+          "type": "row",
+          "title": "Backend Tasks",
+          "gridPos": { "x": 0, "y": 26, "w": 24, "h": 1 }
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Task Run Rate",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 0, "y": 27, "w": 12, "h": 6 },
+          "targets": [
+            { "expr": "rate(backend_tasks_task_runs_count_total[5m])" }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Task Duration p95",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 12, "y": 27, "w": 12, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(backend_tasks_task_runs_duration_bucket[10m])))"
+            }
+          ]
+        },
+
+        {
+          "type": "row",
+          "title": "Node / Process Pressure",
+          "gridPos": { "x": 0, "y": 33, "w": 24, "h": 1 }
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Event Loop Utilization",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 0, "y": 34, "w": 12, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "percentunit" } },
+          "targets": [
+            { "expr": "nodejs_eventloop_utilization" }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Event Loop Delay p99",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 12, "y": 34, "w": 12, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            { "expr": "nodejs_eventloop_delay_p99" }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Heap Used",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 0, "y": 40, "w": 12, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            { "expr": "v8js_memory_heap_used" }
+          ]
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Process CPU Utilization",
+          "datasource": { "type": "prometheus", "uid": "prometheus-user-workload" },
+          "gridPos": { "x": 12, "y": 40, "w": 12, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "percentunit" } },
+          "targets": [
+            { "expr": "process_cpu_utilization" }
+          ]
+        }
+
+      ]
+    }

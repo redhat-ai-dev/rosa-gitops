@@ -1,0 +1,294 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: rhoai-models-registry
+  namespace: devcluster-monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  resyncPeriod: 5m
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folderRef: gitops
+  json: >
+    {
+      "uid": "rhoai-models-registry",
+      "title": "RHOAI Models Registry",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "timezone": "browser",
+      "panels": [
+        {
+          "type": "table",
+          "title": "Predictor Pods Status",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (pod, phase) (kube_pod_status_phase{namespace=\"vllm\", pod=~\".*predictor.*\", phase=~\"Running|Pending|Failed\"} == 1)",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Value": true
+                },
+                "renameByName": {
+                  "pod": "Pod",
+                  "phase": "State"
+                },
+                "indexByName": {
+                  "Time": 0,
+                  "Pod": 1,
+                  "State": 2
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true
+          }
+        },
+        {
+          "type": "stat",
+          "title": "Predictor pods by GPU node",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 6, "w": 24, "h": 6 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "((count by (node) (max by (pod, node) (kube_pod_info{namespace=\"vllm\", pod=~\".*predictor.*\"}))) and on (node) ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"})))) or (0 * ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"}))))",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "GPU Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 6, "w": 12, "h": 9 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "avg by (node) (label_replace(DCGM_FI_DEV_GPU_UTIL, \"node\", \"$1\", \"Hostname\", \"(.*)\")) and on (node) (sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0)"
+            }
+          ]
+        },
+        {
+          "type": "gauge",
+          "title": "GPU Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 6, "w": 12, "h": 9 },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 60 },
+                  { "color": "red", "value": 85 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "avg by (node) (label_replace(DCGM_FI_DEV_GPU_UTIL, \"node\", \"$1\", \"Hostname\", \"(.*)\")) and on (node) (sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0)",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "GPU Memory Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 15, "w": 12, "h": 9 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * sum by (node) (label_replace(DCGM_FI_DEV_FB_USED, \"node\", \"$1\", \"Hostname\", \"(.*)\")) / (sum by (node) (label_replace(DCGM_FI_DEV_FB_USED, \"node\", \"$1\", \"Hostname\", \"(.*)\")) + sum by (node) (label_replace(DCGM_FI_DEV_FB_FREE, \"node\", \"$1\", \"Hostname\", \"(.*)\")))"
+            }
+          ]
+        },
+        {
+          "type": "gauge",
+          "title": "GPU Memory Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 15, "w": 12, "h": 9 },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 60 },
+                  { "color": "red", "value": 85 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * sum by (node) (label_replace(DCGM_FI_DEV_FB_USED, \"node\", \"$1\", \"Hostname\", \"(.*)\")) / (sum by (node) (label_replace(DCGM_FI_DEV_FB_USED, \"node\", \"$1\", \"Hostname\", \"(.*)\")) + sum by (node) (label_replace(DCGM_FI_DEV_FB_FREE, \"node\", \"$1\", \"Hostname\", \"(.*)\")))",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "CPU Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 24, "w": 12, "h": 9 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * sum by (node) (rate(container_cpu_usage_seconds_total{namespace=\"vllm\", pod=~\".*predictor.*\", container!=\"\", image!=\"\"}[5m])) / on (node) sum by (node) (kube_node_status_allocatable{resource=\"cpu\"})"
+            }
+          ]
+        },
+        {
+          "type": "gauge",
+          "title": "CPU Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 24, "w": 12, "h": 9 },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 60 },
+                  { "color": "red", "value": 85 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "((100 * sum by (node) ((rate(container_cpu_usage_seconds_total{namespace=\"vllm\", pod=~\".*predictor.*\", container!=\"\", image!=\"\"}[5m])) * on (namespace, pod) group_left(node) kube_pod_info{namespace=\"vllm\"}) / on (node) sum by (node) (kube_node_status_allocatable{resource=\"cpu\"})) and on (node) ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"})))) or (0 * ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"}))))",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "CPU Memory Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 33, "w": 12, "h": 9 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "((100 * sum by (node) ((container_memory_working_set_bytes{namespace=\"vllm\", pod=~\".*predictor.*\", container!=\"\", image!=\"\"}) * on (namespace, pod) group_left(node) kube_pod_info{namespace=\"vllm\"}) / on (node) sum by (node) (kube_node_status_allocatable{resource=\"memory\"})) and on (node) ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"})))) or (0 * ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"}))))"
+            }
+          ]
+        },
+        {
+          "type": "gauge",
+          "title": "CPU Memory Utilization by Node (%)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 33, "w": 12, "h": 9 },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 60 },
+                  { "color": "red", "value": 85 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "((100 * sum by (node) ((container_memory_working_set_bytes{namespace=\"vllm\", pod=~\".*predictor.*\", container!=\"\", image!=\"\"}) * on (namespace, pod) group_left(node) kube_pod_info{namespace=\"vllm\"}) / on (node) sum by (node) (kube_node_status_allocatable{resource=\"memory\"})) and on (node) ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"})))) or (0 * ((sum by (node) (kube_node_status_capacity{resource=\"nvidia_com_gpu\"}) > 0) unless on (node) (max by (node) (kube_node_role{role=~\"master|control-plane\"}))))",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Predictor Tokens (tokens/s) by pod",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 38, "w": 24, "h": 9 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (pod) (rate(vllm:prompt_tokens_total{namespace=\"vllm\", pod=~\".*predictor.*\"}[5m]))",
+              "legendFormat": "{{pod}} prompt"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (pod) (rate(vllm:generation_tokens_total{namespace=\"vllm\", pod=~\".*predictor.*\"}[5m]))",
+              "legendFormat": "{{pod}} gen"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "tps"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["lastNotNull", "max", "mean"]
+            },
+            "tooltip": { "mode": "single" }
+          }
+        },
+        {
+          "type": "gauge",
+          "title": "Failed Pods (vllm namespace)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 47, "w": 24, "h": 6 },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 3 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count(kube_pod_status_phase{namespace=\"vllm\", phase=\"Failed\"} == 1) or vector(0)",
+              "instant": true
+            }
+          ]
+        }
+      ]
+    }
