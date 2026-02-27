@@ -10,7 +10,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: gitops
+  folderRef: rhdh-ai-observability
   json: >
     {
       "uid": "rolling-demo-health",
