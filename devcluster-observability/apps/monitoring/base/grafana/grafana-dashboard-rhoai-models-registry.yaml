@@ -10,7 +10,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  folderRef: rhdh-ai-observability
+  folderRef: gitops
   json: >
     {
       "uid": "rhoai-models-registry",
@@ -21,43 +21,57 @@ spec:
       "timezone": "browser",
       "panels": [
         {
-          "type": "table",
-          "title": "Predictor Pods Status",
+          "type": "row",
+          "title": "Pod Health (vllm)",
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+        },
+
+        {
+          "type": "stat",
+          "title": "Failed Pods",
+          "description": "Number of predictor pods in Failed phase in vllm namespace.",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+          "gridPos": { "x": 0, "y": 1, "w": 8, "h": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+            }
+          },
           "targets": [
-            {
-              "refId": "A",
-              "expr": "max by (pod, phase) (kube_pod_status_phase{namespace=\"vllm\", pod=~\".*predictor.*\", phase=~\"Running|Pending|Failed\"} == 1)",
-              "instant": true
+            { "expr": "count(kube_pod_status_phase{namespace=\"vllm\", pod=~\".*predictor.*\", phase=\"Failed\"} == 1) or vector(0)", "instant": true }
+          ]
+        },
+
+        {
+          "type": "stat",
+          "title": "Pending Pods",
+          "description": "Number of predictor pods in Pending phase in vllm namespace.",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 8, "y": 1, "w": 8, "h": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 3 }] }
             }
-          ],
-          "transformations": [
-            {
-              "id": "labelsToFields",
-              "options": {}
-            },
-            {
-              "id": "organize",
-              "options": {
-                "excludeByName": {
-                  "Value": true
-                },
-                "renameByName": {
-                  "pod": "Pod",
-                  "phase": "State"
-                },
-                "indexByName": {
-                  "Time": 0,
-                  "Pod": 1,
-                  "State": 2
-                }
-              }
+          },
+          "targets": [
+            { "expr": "count(kube_pod_status_phase{namespace=\"vllm\", pod=~\".*predictor.*\", phase=\"Pending\"} == 1) or vector(0)", "instant": true }
+          ]
+        },
+
+        {
+          "type": "stat",
+          "title": "Running Pods",
+          "description": "Number of predictor pods in Running phase in vllm namespace.",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 16, "y": 1, "w": 8, "h": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
             }
-          ],
-          "options": {
-            "showHeader": true
-          }
+          },
+          "targets": [
+            { "expr": "count(kube_pod_status_phase{namespace=\"vllm\", pod=~\".*predictor.*\", phase=\"Running\"} == 1) or vector(0)", "instant": true }
+          ]
         },
         {
           "type": "stat",
