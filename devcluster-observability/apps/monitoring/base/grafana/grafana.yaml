@@ -18,7 +18,7 @@ spec:
       # the SSO is working. Will be removed once the SSO admin team is set up.
       disable_login_form: "false"
     auth.generic_oauth:
-      enabled: "false"
+      enabled: "true"
       name: Red Hat SSO
       # we allow sign up with viewer role.
       # however we will set manual dashboard rules
