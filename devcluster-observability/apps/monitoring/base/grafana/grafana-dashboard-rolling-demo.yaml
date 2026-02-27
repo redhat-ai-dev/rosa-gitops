@@ -14,7 +14,7 @@ spec:
   json: >
     {
       "uid": "rolling-demo-health",
-      "title": "RHDH Core Health",
+      "title": "Rolling Demo Health",
       "schemaVersion": 39,
       "version": 1,
       "refresh": "30s",
