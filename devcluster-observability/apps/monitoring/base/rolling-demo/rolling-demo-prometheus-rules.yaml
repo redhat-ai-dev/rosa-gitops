@@ -10,7 +10,7 @@ spec:
         - alert: LightspeedOpenAIProviderSpike
           expr: |
             rate(ls_llm_calls_total{provider="openai"}[5m])
-            > 3 * rate(ls_llm_calls_total{provider="openai"}[1h])
+            > 10 * rate(ls_llm_calls_total{provider="openai"}[1h])
           for: 5m
           labels:
             severity: warning

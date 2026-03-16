@@ -20,6 +20,7 @@ spec:
             name: webhook-secret
             key: webhook-url
           sendResolved: true
+          color: '{{ if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}good{{ end }}'
           title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
           text: |
             {{ range .Alerts }}
