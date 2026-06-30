@@ -1,5 +1,6 @@
 # This group provides cluster-wide edit access on the redhat-ai-dev team OpenShift cluster.
 # This does *not* create your user on the cluster, you **must** have an internal SSO account to log on
+# Do NOT add the user's GitHub ID to this list, it MUST be their kerberos ID
 kind: Group
 apiVersion: user.openshift.io/v1
 metadata:
